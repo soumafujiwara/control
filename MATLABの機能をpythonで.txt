@@ -1,0 +1,172 @@
+MATLABの機能をpythonで実行
+※Anaconda入れんでも「Python-control」だけ入れたら、
+「Anaconda」「jupyter」とか関係なしに、インタラクティブモードでプログラム実行できるわ。
+
+
+○環境構築
+Anacondaをインストール。
+1.https://www.anaconda.com/download/#linuxよりAnacondaをインストール。
+2.bash ~/Downloads/Anaconda3-4.1.0-Linux-x86_64.sh
+3.echo 'export PATH="$PYENV_ROOT/versions/anaconda3-4.3.1/bin:$PATH"' >> ~/.bashrc
+4. python --version
+Python 3.6.0 :: Anaconda 4.3.1 (64-bit)
+5.4が成功したらOK!!。
+
+Python-controlのインストール。制御要パッケージ。
+$pip install slycot   # optional
+$pip install control
+
+○実行
+jupyterの立ち上げ。
+$jupyter notebook
+ブラウザ上のnew→python3を選択。
+基本ルールとして「shift」+「Enter」でプログラム実行。
+
+できること
+○古典制御
+・インパルス応答
+・ボード線図
+・ナイキスト線図
+・根奇跡
+・極を求める
+・ゲイン余裕、位相余裕を求める。
+○現代制御
+・可制御性判別
+
+公式サイトより
+http://python-control.sourceforge.net/manual/modules.html
+○Creating System Models
+  ・System creation
+  ・Utility functions and converstions
+○Block Diagram Algebra
+○Control System Analysis
+○Frequency Domain Plotting
+  ・Plotting routines
+  ・Utility functions
+○Time Domain Simulation
+  ・Time responses
+  ・Phase portraits
+○Control System Synthesis
+○Model Simplification Tools
+○Utility Functions
+
+
+
+
+Ex)伝達関数表現G(s)=s+2/(3s^2+4s+5)のボード線図。
+from control import matlab
+from matplotlib import pyplot as plt
+sys1 = matlab.tf([1,2],[3,4,5])
+matlab.bode(sys1)
+plt.show()
+
+Ex)状態空間表現におけるA=[-1 0;1 -2],B=[1;2],C=[1 0]のステップ応答。
+from control import matlab
+from matplotlib import pyplot as plt
+sys2 = matlab.ss("-1,0;1,-2","1;2","1,0","0")
+yout,T = matlab.step(sys2)
+plt.plot(T,yout)
+plt.show()
+
+Ex)根軌跡。
+from control import matlab
+from matplotlib import pyplot as plt
+num = [1]
+den = [1, 19, 108, 180]
+sys = matlab.tf(num, den)
+matlab.rlocus(sys)
+plt.show()
+
+
+『MATLAB/Simulinkによるわかりやすい制御工学』
+・P25 2.7.2　極を求める。
+from control import matlab
+from matplotlib import pyplot as plt
+num = [4, 5]
+den = [1, 2, 5]
+sys = matlab.tf(num, den)
+matlab.pole(sys)
+
+（出力）array([-1.+2.j, -1.-2.j])
+(解説)P = -1 + j2,-1 - j2
+
+
+・P56 3.5.2　インパルス応答、ステップ応答。
+from control import matlab
+from matplotlib import pyplot as plt
+num = [1, 3]
+den = [1, 0, -9]
+sys = matlab.tf(num, den)
+T, yout = matlab.impulse(sys)
+plt.plot(yout,T)
+plt.show()
+
+from control import matlab
+from matplotlib import pyplot as plt
+num = [4, 5]
+den = [1, 2, 5]
+sys = matlab.tf(num, den)
+yout,T = matlab.step(sys)
+plt.plot(T,yout)
+plt.show()
+
+
+・P56 4.4.1  ブロック線図の結合と目標値応答Gyrと入力外乱応答Gydの描画。
+from control import matlab
+from matplotlib import pyplot as plt
+num = [5]
+den = [1, 2, 2]
+P = matlab.tf(num, den)
+K = 2
+Gyr = matlab.feedback(P*K,1)
+Gyd = matlab.feedback(P,K)
+youtGyr,T = matlab.step(Gyr)
+youtGyd,T = matlab.step(Gyd)
+plt.plot(T,youtGyr)
+plt.plot(T,youtGyd)
+plt.show()
+
+
+・P56 4.4.4  根軌跡。
+from control import matlab
+from matplotlib import pyplot as plt
+num = [1]
+den1 = [1, 1]
+den2 = [1, 4]
+den3 = [1, 7]
+sys1 = matlab.tf(num, den1)
+sys2 = matlab.tf(num, den2)
+sys3 = matlab.tf(num, den3)
+sys = sys1 * sys2 * sys3
+matlab.rlocus(sys)
+plt.show()
+
+
+・P128 6.4.1 ボード線図。
+from control import matlab
+from matplotlib import pyplot as plt
+sys = matlab.tf([1],[1,1,1])
+matlab.bode(sys)
+plt.show()
+
+
+・P128 6.4.4 ナイキスト線図。
+from control import matlab
+from matplotlib import pyplot as plt
+sys = matlab.tf([1],[1,1,1])
+matlab.nyquist(sys)
+plt.show()
+
+
+P150 7.4.1 ゲイン余裕Gmと位相余裕Pm。
+from control import matlab
+from matplotlib import pyplot as plt
+den1 = [1, 1]
+sys1 = matlab.tf(num, den1)
+sysP = sys1**3
+Kp = 2
+sysL = sysP*Kp
+matlab.margin(sysL)
+
+（出力）(4.0, 67.598066367190896, 0.76642093654087973, 1.7320508075688772)
+(解説)ゲイン余裕Gm = 4, 位相余裕Pm[deg] = 67.598066367190896, ゲイン交差周波数ωgc　=  0.76642093654087973, 位相交差周波数ωpc = 1.7320508075688772
